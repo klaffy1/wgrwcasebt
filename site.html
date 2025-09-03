@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>CS2 Рулетка</title>
+  <style>
+    body {
+      background: #141414;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin: 20px 0;
+      color: #fff;
+      text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+    }
+
+    /* Лайв-лента */
+    .live-feed {
+      width: 250px;
+      background: #1c1c1c;
+      border: 2px solid #333;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+      text-align: left;
+      overflow-y: auto;
+      max-height: 600px;
+    }
+
+    .live-feed h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      text-align: center;
+      text-shadow: 0 0 10px cyan;
+    }
+
+    .feed-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding: 6px;
+      border-radius: 8px;
+      background: #111;
+      border: 1px solid #444;
+      transition: 0.3s;
+    }
+
+    .feed-item:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
+    }
+
+    .feed-item img {
+      width: 40px;
+      border-radius: 6px;
+    }
+
+    .feed-item span {
+      font-size: 14px;
+      color: #fff;
+    }
+
+    /* Рулетка */
+    .main-content {
+      flex-grow: 1;
+    }
+
+    .roulette {
+      position: relative;
+      width: 600px;
+      margin: 20px auto;
+      overflow: hidden;
+      border: 2px solid #333;
+      border-radius: 15px;
+      background: #1c1c1c;
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+    }
+
+    .items {
+      display: flex;
+    }
+
+    .slot {
+      min-width: 100px;
+      margin: 10px;
+      background: #111;
+      border: 1px solid #444;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      color: white;
+    }
+
+    .slot img {
+      width: 80px;
+      height: auto;
+      display: block;
+      margin: 0 auto 5px;
+    }
+
+    .indicator {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 15px solid red;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: linear-gradient(90deg, #ff00ff, #00ffff);
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+      text-shadow: 0 0 10px cyan;
+    }
+
+    /* список предметов с шансами */
+    #itemsList {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin: 8px 0;
+    }
+
+    .item-row img {
+      width: 50px;
+      height: auto;
+      border-radius: 5px;
+      border: 1px solid #444;
+    }
+
+    .item-row span {
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Лента -->
+  <div class="live-feed" id="liveFeed">
+    <h2>🔥 Лайв-лента</h2>
+    <div id="feedItems"></div>
+  </div>
+
+  <!-- Основная часть -->
+  <div class="main-content">
+    <h1>🎯 CS2 Рулетка</h1>
+
+    <div class="roulette">
+      <div class="indicator"></div>
+      <div class="items" id="items"></div>
+    </div>
+
+    <button id="spin">Крутить</button>
+    <div id="result"></div>
+
+    <!-- список предметов -->
+    <div id="itemsList"></div>
+  </div>
+
+  <script>
+    const itemsData = [
+      { name: "P250 Sand Dune (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLhzMOwwjFU0OGvZqBSLfWXB3Kdj78n4rY-SX-wxhty4WzUwoqud32RPFUnDMR5RuRb4UXrmtznMOLrtgLAy9USoBHo4ag/360fx360f", chance: 20 },
+      { name: "Desert Eagle Недовольство (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL1m5fn8Sdk7OeRZ7JoMuCSHXSvwP9jsd5tSii0mRgYvjiBk5r0bynEOAMhXptzQLRc5kPrkdSxNOrltlPWiIkQnyX-iiwf7i054bwBA_U7uvqApLDyUkE/360fx360f", chance: 15 },
+      { name: "UMP-45 Exposure (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLkk4a0qB1Y-s27ZbQ5dc-LQ3WR2NF7seJhRie2qhAitzSQl8GseHqRbQIoCpp2QLULthi5m9G1Y-yz5QKN3Y4Xm3mthyxMuyptsr1WT-N7rb0To1cU/360fx360f", chance: 15 },
+      { name: "XM1014 | Черный галстук (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLpk8ewrHZk7OeRcKk8cKHHMXSAxO1iovRkcCG2lAs-_TyGwoqqeS3DPFN0W5chTeUD4UPpkdO1Yezh51bXgoMQyy6ojSMa53x1o7FVTlRbjP4/360fx360f", chance: 15 },
+      { name: "Five-SeveN Дань прошлому (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL3l4Dl7idN6vyRa7FSJvmFC3SV1-t4j_NsWzu8lwgzujKLpYL8JSLSMxhzApEjFO8NuxG7x9zjY-i27gGMj9hDny_3jXkYui454ugFUqEk_KSFkUifZjIGuV1m/360fx360f", chance: 15 },
+      { name: "Glock-18 | Блок-18 (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL2kpnj9h1c4_2tY5tvMvmQBVidzuByouhoQRa-kBkupjDLmN-rJH3FZgUkWMF2EOVfsUS8lNO1Nrzm4wbY2I9EzCT23StI6Hs4t_FCD_Qg7K1xSg/360fx360f", chance: 12.5 },
+      { name: "Five-SeveN | Триумвират (Прямо с завода)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL3l4Dl7idN6vyRa7FSJvmFC3SV1-t4j-B8SCS2mwkitwKJk4jxNWWXPAZzD5pwTeBetUPtw4C1N7jh5A3bj48RxSyqiiwc7Sg6tr0ABaAk5OSJ2O3yTJMF/360fx360f", chance: 11 },
+      { name: "StatTrak™ USP-S | Билет в ад (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLkjYbf7itX6vytbbZSI-WsG3SA_vp5j-lsQyWMmBgjuiiI1I6qdH6fbgAoApFyRrJf4xnumoDnM-7j41Pbgt8TyCT72CxK6SttsrscEf1y0Tw_DYE/360fx360f", chance: 11 },
+      { name: "AK-47 | Сланец (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiVI0POlPPNSMOKcCGKD0ud5vuBlcCS2kRQyvnOGw4r_d3OWZ1MnCpBwR-Rc5hbumtCzP-Kw7wSIiYsRnHr2i35MvS1s_a9cBkIkkRA2/360fx360f", chance: 10 },
+      { name: "M4A1-S | Чёрный лотос (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwjFS4_ega6F_H_3HDzaD_ux6seJicCW8gQg0jDCAnobsLGWTbQQnDsN3QuYOtELqkIazZeLm7lPYj9gQzyj72y8du31i6ulQA6Rx5OSJ2CPXrFUp/360fx360f", chance: 5.5 },
+      { name: "AWP Fever Dream", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk7uW-V7R-OfObAXeR1eZJveRtRjy-2xsk626DzdesdiqQbVIgWMZ5QrIDsxnrwNTkPurg5AeKiN0Xyir8iypXrnE800aE0Zs/360fx360f", chance: 4.5 },
+      { name: "AK-47 | Буйство красок (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiFO0POlPPNSMP-aAHOvxedlsfN7TjCMmBgjuiiI1NeqdHOWagQhXpMkFuFe5hK_wIDuMuuxtlHajNpMxCyv2i0b6H0-47wcEf1y20Xhi74/360fx360f", chance: 3.5 },
+      { name: "M4A1-S | Опустошитель (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwjFS4_ega6F_H_eAMWrEwL9JtORqRiSygRI1jDCAnobsLGXBawMlXJohFLRY5BO5kILiMuzrsQTWi9gWnyr9insYuCZj5LtQVaEk5OSJ2CFIuQ75/360fx360f", chance: 2 },
+      { name: "Desert Eagle | Поток информации (После полевых испытаний)", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL1m5fn8Sdk7OeRbKFsJ8-DHG6e1f1iouRoQha-kBkupjDLz9_6c3mWPFBxX8N0EOMIsULpmtHjPuvq41bc2dhAzy3_2ngfvHpt5_FCD_RJLjxjaQ/360fx360f", chance: 1 },               
+      { name: "AK-47 Fire Serpent", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiFO0PSneqF-JeKDC2mE_u995LZWTTuygxIYvjiBk5r0bymVZwIoWZJ1QLEDs0O6ktayZr6ztFeIjYxAyyX-jH8b5y5vt-wDB_Y7uvqAHvjgL6w/360fx360f", chance: 0.7 },
+      { name: "Karambit Doppler", image: "https://community.fastly.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Q7uCvZaZkNM-SA1iUzv5mvOR7cDm7lA4i4gKJk4jxNWXFb1cpDJR2FOFbsBTql9bjYbzq7gPZiN1MxH7_2ytNuCdpte1UB_Ui5OSJ2GbkVqni/360fx360f", chance: 0.5 }
+    ];
+
+    const itemsContainer = document.getElementById("items");
+    const resultDiv = document.getElementById("result");
+    const spinButton = document.getElementById("spin");
+    const itemsList = document.getElementById("itemsList");
+    const feedContainer = document.getElementById("feedItems");
+
+    const spinSound = new Audio("https://www.myinstants.com/media/sounds/5x30.mp3");
+    const winSound = new Audio("https://www.myinstants.com/media/sounds/zvuk-litvina.mp3");
+
+    function createSlots() {
+      itemsContainer.innerHTML = "";
+      for (let i = 0; i < 30; i++) {
+        itemsData.forEach(item => {
+          const slot = document.createElement("div");
+          slot.classList.add("slot");
+          slot.innerHTML = `<img src="${item.image}"><br>${item.name}`;
+          itemsContainer.appendChild(slot);
+        });
+      }
+    }
+
+    function showItemsList() {
+      itemsList.innerHTML = "<h2>🎁 Предметы и их шанс:</h2>";
+      itemsData.forEach(item => {
+        const row = document.createElement("div");
+        row.classList.add("item-row");
+        row.innerHTML = `<img src="${item.image}"> <span>${item.name} — ${item.chance}%</span>`;
+        itemsList.appendChild(row);
+      });
+    }
+
+    function getRandomItem() {
+      let totalChance = itemsData.reduce((sum, item) => sum + item.chance, 0);
+      let rand = Math.random() * totalChance;
+      for (let item of itemsData) {
+        if (rand < item.chance) return item;
+        rand -= item.chance;
+      }
+    }
+
+    // ====== ЛАЙВ ЛЕНТА ======
+    function addToFeed(item) {
+      const entry = {
+        name: item.name,
+        image: item.image,
+        time: Date.now()
+      };
+
+      let feed = JSON.parse(localStorage.getItem("liveFeed")) || { timestamp: Date.now(), items: [] };
+
+      // Проверка на 24 часа
+      if (Date.now() - feed.timestamp > 24 * 60 * 60 * 1000) {
+        feed = { timestamp: Date.now(), items: [] };
+      }
+
+      feed.items.unshift(entry); // добавляем в начало
+      if (feed.items.length > 50) feed.items.pop(); // максимум 50 записей
+
+      localStorage.setItem("liveFeed", JSON.stringify(feed));
+      renderFeed();
+    }
+
+    function renderFeed() {
+      feedContainer.innerHTML = "";
+      let feed = JSON.parse(localStorage.getItem("liveFeed"));
+      if (!feed) return;
+      feed.items.forEach(entry => {
+        const div = document.createElement("div");
+        div.classList.add("feed-item");
+        div.innerHTML = `<img src="${entry.image}"><span>${entry.name}</span>`;
+        feedContainer.appendChild(div);
+      });
+    }
+
+spinButton.addEventListener("click", () => {
+  spinButton.disabled = true;
+  resultDiv.textContent = "";
+
+  createSlots();
+
+  const newSlots = document.querySelectorAll(".slot");
+  const winner = getRandomItem();
+
+  const matchingSlots = Array.from(newSlots).filter(slot => slot.innerHTML.includes(winner.name));
+  const winnerSlot = matchingSlots[Math.floor(Math.random() * matchingSlots.length)];
+  const winnerIndex = Array.from(newSlots).indexOf(winnerSlot);
+
+  const slotWidth = newSlots[0].offsetWidth + 20;
+  const finalX = -(winnerIndex * slotWidth - 250);
+
+  let startTime = null;
+  const duration = 4000; // общая длительность анимации
+  const startX = 0;
+  const distance = finalX - startX;
+
+  spinSound.currentTime = 0;
+  spinSound.play();
+
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    const t = Math.min(elapsed / duration, 1);
+
+    // Кривые ускорение/торможение: cubic-bezier(0.6, 0, 0.2, 1)
+    const eased = t < 0.5 
+      ? 4 * t * t * t // ускорение (первые 50%)
+      : 1 - Math.pow(-2 * t + 2, 3) / 2; // замедление (последние 50%)
+
+    itemsContainer.style.transform = `translateX(${startX + distance * eased}px)`;
+
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      spinSound.pause();
+      spinSound.currentTime = 0;
+      winSound.play();
+
+      resultDiv.innerHTML = `Вы выиграли <b>${winner.name}</b> 🎉 <br><img src="${winner.image}" width="120">`;
+      addToFeed(winner);
+      spinButton.disabled = false;
+    }
+  }
+
+  requestAnimationFrame(animate);
+});
+
+    createSlots();
+    showItemsList();
+    renderFeed();
+  </script>
+</body>
+</html>
